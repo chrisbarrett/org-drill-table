@@ -23,7 +23,7 @@ PRECOMMIT_SRC  = $(SCRIPT)/pre-commit.sh
 PRECOMMIT_HOOK = $(GIT_DIR)/hooks/pre-commit
 
 .PHONY: all
-all : env compile dist
+all : packages compile dist
 
 # Configure tooling and environment.
 .PHONY: env
