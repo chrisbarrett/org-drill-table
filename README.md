@@ -1,5 +1,7 @@
 # org-drill-table
 
+Easily generate org-drill cards using org-mode tables.
+
 ## Summary
 
 Some types of information, such as vocabulary lists, yearn to be represented in
