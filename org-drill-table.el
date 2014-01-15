@@ -224,11 +224,8 @@ Create the heading if it does not exist."
 
 (defun org-drill-table--table->cards (heading type instructions)
   "Convert the drill-table tree at point to a list of OrgDrillCards. "
-  (let ((rows (save-excursion
-                (unless (org-at-table-p)
-                  (org-drill-table--goto-table-in-subtree))
-                (org-drill-table--drill-table-rows))))
-    (--map (OrgDrillCard heading type instructions it) rows)))
+  (--map (OrgDrillCard heading type instructions it)
+         (org-drill-table--drill-table-rows)))
 
 (defun org-drill-table--get-or-read-prop (name read-fn)
   "Get the value of property NAME for the headline at point.
@@ -262,6 +259,9 @@ INSTRUCTIONS is a string describing how to use the card."
     (org-drill-table--get-or-read-prop
      "DRILL_INSTRUCTIONS" (lambda () (read-string "Card instructions: ")))))
 
+  (unless (org-at-table-p)
+    (org-drill-table--goto-table-in-subtree))
+
   (let* ((cards (org-drill-table--table->cards heading type instructions))
          (existing (org-drill-table--existing-cards))
          (new-cards (-difference cards existing)))
@@ -293,7 +293,7 @@ INSTRUCTIONS is a string describing how to use the card."
 Suitable for adding to `org-ctrl-c-ctrl-c-hook'."
   (when (and (org-at-table-p)
              (org-entry-get (point) "DRILL_HEADING"))
-    (call-interactively 'org-drill-generate-from-table)))
+    (call-interactively 'org-drill-table-generate)))
 
 (provide 'org-drill-table)
 

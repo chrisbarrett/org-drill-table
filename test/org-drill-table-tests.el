@@ -26,6 +26,31 @@
 ;;; Code:
 
 (require 'ert)
+(require 'f)
+(defvar test--input
+
+  "* Test Heading
+| X  | Y  |
+|----+----|
+| X1 | Y1 |
+| X2 | Y2 |
+| X3 | Y3 |
+
+")
+
+(defmacro test--with-temp-test-buffer (&rest body)
+  (declare (indent 0))
+  `(with-temp-buffer
+     (org-mode)
+     (insert test--input)
+     (goto-char (point-min))
+     ,@body))
+
+(ert-deftest creates-cards-heading ()
+  (should (s-match (rx (+ "*") (+ space) "Cards")
+                   (test--with-temp-test-buffer
+                    (org-drill-table-generate "_" "_" "_")
+                    (buffer-string)))))
 
 (provide 'org-drill-table-tests)
 
