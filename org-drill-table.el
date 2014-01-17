@@ -86,7 +86,7 @@
 
 ;; `org-drill-table-generate' checks the existing list of cards so it does not
 ;; add duplicates.
-;
+
 ;; This package provides an additional command, `org-drill-table-update', which
 ;; can be added to `org-ctrl-c-ctrl-c-hook'.
 
