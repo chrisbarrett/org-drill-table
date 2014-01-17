@@ -1,6 +1,6 @@
 # org-drill-table
 
-Generate drill cards from org tables.
+Easily generate org-drill cards using org-mode tables.
 
 ## Summary
 
@@ -9,7 +9,7 @@ tables. However, org-drill requires individual headlines with the "drill" tag;
 creating these can be laborious and it is difficult to get an overview of your
 cards when the buffer is folded.
 
-This package provides a command, `org-drill-table-generate', that will generate
+This package provides a command, `org-drill-table-generate`, that will generate
 drill cards based on an org-mode table in the current subtree. The cards will
 inserted under a new "Cards" heading in the current tree.
 
