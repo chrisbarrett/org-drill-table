@@ -222,17 +222,21 @@ Create the heading if it does not exist."
     (cond
      ((outline-next-heading)
       ;; Walk over headings at the current level, searching for Cards heading.
-      (while (not (or (eobp)
-                      (s-matches? (rx bol (+ "*") (+ space) "Cards")
-                                  (buffer-substring (line-beginning-position)
-                                                    (line-end-position)))))
-        (org-forward-heading-same-level nil t))
-      ;; Create if not found.
-      (when (eobp)
-        (org-insert-heading)
-        (insert "Cards")
-        (when org-drill-table-noexport-cards
-          (org-set-tags-to ":noexport:"))))
+      (let ((moved? t)
+            (found? nil))
+        (while (and moved? (not found?))
+          (let ((before (point)))
+            (org-forward-heading-same-level nil t)
+            (setq moved? (/= before (point)))
+            (setq found? (s-matches? (rx bol (+ "*") (+ space) "Cards")
+                                     (buffer-substring (line-beginning-position)
+                                                       (line-end-position))))))
+        (unless found?
+          (goto-char (point-max))
+          (org-insert-heading)
+          (insert "Cards")
+          (when org-drill-table-noexport-cards
+            (org-set-tags-to ":noexport:")))))
      (t
       (org-insert-subheading nil)
       (insert "Cards")
@@ -318,7 +322,7 @@ Suitable for adding to `org-ctrl-c-ctrl-c-hook'."
 (defun org-drill-table-update-all ()
   "Call `org-drill-table-update' on each table in the buffer."
   (interactive "*")
-  (org-table-map-tables 'org-drill-table-update t))
+  (org-table-map-tables 'org-drill-table-update))
 
 (provide 'org-drill-table)
 
