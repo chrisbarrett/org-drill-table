@@ -98,6 +98,18 @@
 (require 'org)
 (require 'org-drill)
 
+(defgroup org-drill-table nil
+  "Generate drill cards from org tables."
+  :group 'org
+  :prefix "org-drill-table")
+
+(defcustom org-drill-table-noexport-cards t
+  "When non-nil, apply :noexport: tag to generated Cards."
+  :group 'org-drill-table
+  :type 'boolean)
+
+;; -----------------------------------------------------------------------------
+
 (cl-defstruct (OrgDrillCard
                (:constructor OrgDrillCard (heading type instructions subheadings)))
   "Defines a card to generate for use with org-drill.
@@ -220,7 +232,12 @@ Create the heading if it does not exist."
         (org-insert-heading)))
      (t
       (org-insert-subheading nil)
-      (insert "Cards")))))
+      (insert "Cards")
+      ;; Apply noexport tag.
+      (when org-drill-table-noexport-cards
+        (org-set-tags-to ":noexport:"))
+
+      (goto-char (line-end-position))))))
 
 (defun org-drill-table--table->cards (heading type instructions)
   "Convert the drill-table tree at point to a list of OrgDrillCards. "
