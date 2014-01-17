@@ -75,7 +75,7 @@ install : dist
 # Uninstall the package.
 .PHONY: uninstall
 uninstall :
-	rm -rf $(USER_ELPA_D)/skeletor-*
+	rm -rf $(USER_ELPA_D)/org-drill-table-*
 
 # Restore to pristine state.
 .PHONY: clean-all
