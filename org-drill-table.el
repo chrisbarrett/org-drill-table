@@ -200,55 +200,51 @@ and the row value."
 
             (OrgDrillCard heading type instructions (nreverse acc))))))))
 
-(defun org-drill-table--goto-cards ()
-  "Goto the Cards subtree."
+(defun org-drill-table--forward-heading-until-at-cards ()
+  "Move forward by headings at this level until the Cards heading is found."
   (save-restriction
     (org-narrow-to-subtree)
-    (search-forward-regexp (rx bol (+ "*") (+ space) "Cards")
-                           nil t)))
+    (unless (org-at-heading-p) (outline-next-heading))
+    (let ((moved? t)
+          (cards-heading-pos nil))
+      (while (and moved? (not cards-heading-pos))
+        (let ((before (point)))
+          (org-forward-heading-same-level nil t)
+          (setq moved? (/= before (point)))
+          (when (s-matches? (rx bol (+ "*") (+ space) "Cards")
+                            (buffer-substring (line-beginning-position)
+                                              (line-end-position)))
+            (setq cards-heading-pos (point)))))
 
-(defun org-drill-table--existing-cards ()
-  "Parse the Cards subtree for existing drill cards.
-Return a list of OrgDrillCard."
-  (save-excursion
-    (when (org-drill-table--goto-cards)
-      (save-restriction
-        (org-narrow-to-subtree)
-        (let (acc)
-          (while (outline-next-heading)
-            (setq acc (cons (org-drill-table--subtree->card) acc)))
-          (nreverse acc))))))
+      cards-heading-pos)))
 
 (defun org-drill-table--goto-or-insert-cards-heading ()
   "Move to the Cards heading for the current subtree.
 Create the heading if it does not exist."
   (save-restriction
     (org-narrow-to-subtree)
-    (cond
-     ((outline-next-heading)
-      ;; Walk over headings at the current level, searching for Cards heading.
-      (let ((moved? t)
-            (found? nil))
-        (while (and moved? (not found?))
-          (let ((before (point)))
-            (org-forward-heading-same-level nil t)
-            (setq moved? (/= before (point)))
-            (setq found? (s-matches? (rx bol (+ "*") (+ space) "Cards")
-                                     (buffer-substring (line-beginning-position)
-                                                       (line-end-position))))))
-        (unless found?
-          (goto-char (point-max))
-          (org-insert-heading)
-          (insert "Cards")
-          (when org-drill-table-noexport-cards
-            (org-set-tags-to ":noexport:")))))
-     (t
-      (org-insert-subheading nil)
-      (insert "Cards")
-      (when org-drill-table-noexport-cards
-        (org-set-tags-to ":noexport:"))))
+    (let ((subtrees? (save-excursion (outline-next-heading)))
+          (found? (org-drill-table--forward-heading-until-at-cards)))
+      (unless found?
+        (goto-char (point-max))
+        (if subtrees? (org-insert-heading) (org-insert-subheading nil))
+        (insert "Cards")
+        (when org-drill-table-noexport-cards
+          (org-set-tags-to ":noexport:"))))
 
     (goto-char (line-end-position))))
+
+(defun org-drill-table--existing-cards ()
+  "Parse the Cards subtree for existing drill cards.
+Return a list of OrgDrillCard."
+  (save-excursion
+    (when (org-drill-table--forward-heading-until-at-cards)
+      (save-restriction
+        (org-narrow-to-subtree)
+        (let (acc)
+          (while (outline-next-heading)
+            (setq acc (cons (org-drill-table--subtree->card) acc)))
+          (nreverse acc))))))
 
 (defun org-drill-table--table->cards (heading type instructions)
   "Convert the drill-table tree at point to a list of OrgDrillCards. "
