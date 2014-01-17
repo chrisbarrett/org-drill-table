@@ -156,6 +156,17 @@ and the row value."
       (newline)
       (insert value))))
 
+(defun org-drill-table--skip-props-and-schedule ()
+  "Move past the properties and schedule of the current subtree."
+  ;; Properties.
+  (-when-let (bounds (org-get-property-block))
+    (goto-char (cdr bounds))
+    (forward-line))
+  ;; Schedule.
+  (when (s-matches? "SCHEDULED" (buffer-substring (line-beginning-position)
+                                                  (line-end-position)))
+    (forward-line)))
+
 (defun org-drill-table--subtree->card ()
   "Convert an individual drill card at point to an OrgDrillCard."
   (let ((heading (elt (org-heading-components) 4))
@@ -163,14 +174,7 @@ and the row value."
     (save-excursion
       (save-restriction
         (org-narrow-to-subtree)
-
-        ;; Move past properties and schedule.
-        (-when-let (bounds (org-get-property-block))
-          (goto-char (cdr bounds))
-          (forward-line))
-        (when (s-matches? "SCHEDULED" (buffer-substring (line-beginning-position)
-                                                        (line-end-position)))
-          (forward-line))
+        (org-drill-table--skip-props-and-schedule)
 
         ;; Instructions are the rest of the text up to the first child.
         (let ((instructions
@@ -186,7 +190,8 @@ and the row value."
               (let ((hd (elt (org-heading-components) 4))
                     (content (save-restriction
                                (org-narrow-to-subtree)
-                               (->> (buffer-substring (point-min) (point-max))
+                               (org-drill-table--skip-props-and-schedule)
+                               (->> (buffer-substring (point) (point-max))
                                  (s-split "\n")
                                  (-drop 1)
                                  (s-join "\n")
