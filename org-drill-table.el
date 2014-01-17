@@ -229,15 +229,17 @@ Create the heading if it does not exist."
         (org-forward-heading-same-level nil t))
       ;; Create if not found.
       (when (eobp)
-        (org-insert-heading)))
+        (org-insert-heading)
+        (insert "Cards")
+        (when org-drill-table-noexport-cards
+          (org-set-tags-to ":noexport:"))))
      (t
       (org-insert-subheading nil)
       (insert "Cards")
-      ;; Apply noexport tag.
       (when org-drill-table-noexport-cards
-        (org-set-tags-to ":noexport:"))
+        (org-set-tags-to ":noexport:"))))
 
-      (goto-char (line-end-position))))))
+    (goto-char (line-end-position))))
 
 (defun org-drill-table--table->cards (heading type instructions)
   "Convert the drill-table tree at point to a list of OrgDrillCards. "
