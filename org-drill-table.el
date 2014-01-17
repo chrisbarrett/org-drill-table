@@ -285,8 +285,7 @@ INSTRUCTIONS is a string describing how to use the card."
          (existing (org-drill-table--existing-cards))
          (new-cards (-difference cards existing)))
     (save-excursion
-      (org-drill-table--goto-or-insert-cards-heading )
-      (goto-char (line-end-position))
+      (org-drill-table--goto-or-insert-cards-heading)
       ;; Find only cards that have not been inserted.
       (--each (-map-indexed 'cons new-cards)
         ;; Insert each tree, retaining the current heading level.
@@ -310,9 +309,16 @@ INSTRUCTIONS is a string describing how to use the card."
 (defun org-drill-table-update ()
   "Update an existing org drill table.
 Suitable for adding to `org-ctrl-c-ctrl-c-hook'."
+  (interactive "*")
   (when (and (org-at-table-p)
              (org-entry-get (point) "DRILL_HEADING"))
     (call-interactively 'org-drill-table-generate)))
+
+;;;###autoload
+(defun org-drill-table-update-all ()
+  "Call `org-drill-table-update' on each table in the buffer."
+  (interactive "*")
+  (org-table-map-tables 'org-drill-table-update t))
 
 (provide 'org-drill-table)
 
