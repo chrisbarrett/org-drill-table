@@ -69,7 +69,7 @@ packages : $(PKG_DIR)
 # Install the package to the user's Emacs dir.
 .PHONY: install
 install : dist
-	$(EMACS) $(EMACSFLAGS) -l package \
+	$(CASK) exec $(EMACS) $(EMACSFLAGS) -l package \
 	-f package-initialize  --eval '(package-install-file "$(CWD)/$(PACKAGE_TAR)")'
 
 # Uninstall the package.
