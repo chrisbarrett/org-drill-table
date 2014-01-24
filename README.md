@@ -11,7 +11,7 @@ cards when the buffer is folded.
 
 This package provides a command, `org-drill-table-generate`, that will generate
 drill cards based on an org-mode table in the current subtree. The cards will
-inserted under a new "Cards" heading in the current tree.
+be inserted under a new "Cards" heading in the current tree.
 
 For example, given the following org headline,
 
