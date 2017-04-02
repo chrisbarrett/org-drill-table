@@ -36,31 +36,31 @@
 ;; For example, given the following org headline,
 
 ;;    * Vocab
-;;    |-----------+---------|
-;;    | English   | Spanish |
-;;    |-----------+---------|
-;;    | Today     | Hoy     |
-;;    | Yesterday | Ayer    |
-;;    | Tomorrow  | Mañana  |
-;;    |-----------+---------|
+;;    |-----------+---------+----------------|
+;;    | English   | Spanish | Example        |
+;;    |-----------+---------+----------------|
+;;    | Today     | Hoy     | Hoy es domingo |
+;;    | Yesterday | Ayer    |                |
+;;    | Tomorrow  | Mañana  |                |
+;;    |-----------+---------+----------------|
 
 ;; invoking `org-drill-table-generate' will generate cards for each table row:
 
 ;;    * Vocab
 ;;    :PROPERTIES:
-;;    :DRILL_HEADING: Noun
+;;    :DRILL_HEADING:
 ;;    :DRILL_CARD_TYPE: twosided
 ;;    :DRILL_INSTRUCTIONS: Translate the following word.
 ;;    :END:
-;;    |-----------+---------|
-;;    | English   | Spanish |
-;;    |-----------+---------|
-;;    | Today     | Hoy     |
-;;    | Yesterday | Ayer    |
-;;    | Tomorrow  | Mañana  |
-;;    |-----------+---------|
+;;    |-----------+---------+----------------|
+;;    | English   | Spanish | Example        |
+;;    |-----------+---------+----------------|
+;;    | Today     | Hoy     | Hoy es domingo |
+;;    | Yesterday | Ayer    |                |
+;;    | Tomorrow  | Mañana  |                |
+;;    |-----------+---------+----------------|
 ;;    ** Cards
-;;    *** Noun                                                            :drill:
+;;    *** Today                                                          :drill:
 ;;    :PROPERTIES:
 ;;    :DRILL_CARD_TYPE: twosided
 ;;    :END:
@@ -69,7 +69,9 @@
 ;;    Today
 ;;    **** Spanish
 ;;    Hoy
-;;    *** Noun                                                            :drill:
+;;    **** Example
+;;    Hoy es domingo
+;;    *** Yesterday                                                      :drill:
 ;;    :PROPERTIES:
 ;;    :DRILL_CARD_TYPE: twosided
 ;;    :END:
@@ -78,7 +80,7 @@
 ;;    Yesterday
 ;;    **** Spanish
 ;;    Ayer
-;;    *** Noun                                                            :drill:
+;;    *** Tomorrow                                                       :drill:
 ;;    :PROPERTIES:
 ;;    :DRILL_CARD_TYPE: twosided
 ;;    :END:
@@ -87,7 +89,15 @@
 ;;    Tomorrow
 ;;    **** Spanish
 ;;    Mañana
+;;
+;; Note that there are several things happening here:
+;;   - Each column in the table is put on its own row if it's non-empty
+;;   - Instead of using the DRILL_HEADING property as a generic heading, the first element of each row is used as the heading
 
+;;
+;; If instead of using the words from the first column as the headings, you want to use the same string for each heading,
+;; (i.e. the old behavior) this can be done by specifying the DRILL_HEADING property
+;;
 ;; `org-drill-table-generate' checks the existing list of cards so it does not
 ;; add duplicates.
 
@@ -152,7 +162,7 @@ and the row value."
   (insert (OrgDrillCard-instructions card))
   ;; Insert subheadings. Create a subheading for the first and use the same
   ;; heading level for the rest.
-  (--each (-map-indexed 'cons (OrgDrillCard-subheadings card))
+  (--each (-map-indexed 'cons (--remove (string= "" (cdr it)) (OrgDrillCard-subheadings card)))
     (cl-destructuring-bind (idx header . value) it
       (if (zerop idx) (org-insert-subheading nil) (org-insert-heading))
       (insert header)
@@ -168,6 +178,10 @@ and the row value."
   ;; Schedule.
   (when (s-matches? "SCHEDULED" (buffer-substring (line-beginning-position)
                                                   (line-end-position)))
+    (forward-line))
+  ;; Advance point if we're still on an org-heading. This is required because
+  ;; if the sub-heading has no properties or scheduled, then point won't move
+  (when (org-at-heading-p)
     (forward-line)))
 
 (defun org-drill-table--subtree->card ()
@@ -195,11 +209,7 @@ and the row value."
                     (content (save-restriction
                                (org-narrow-to-subtree)
                                (org-drill-table--skip-props-and-schedule)
-                               (->> (buffer-substring-no-properties (point) (point-max))
-                                    (s-split "\n")
-                                    (-drop 1)
-                                    (s-join "\n")
-                                    s-trim))))
+                               (s-trim (buffer-substring-no-properties (point) (point-max))))))
                 (setq acc (cons (cons hd content) acc))))
 
             (OrgDrillCard heading type instructions (nreverse acc))))))))
@@ -235,7 +245,6 @@ Create the heading if it does not exist."
         (insert "Cards")
         (when org-drill-table-noexport-cards
           (org-set-tags-to ":noexport:"))))
-
     (goto-char (line-end-position))))
 
 (defun org-drill-table--existing-cards ()
@@ -252,7 +261,10 @@ Return a list of OrgDrillCard."
 
 (defun org-drill-table--table->cards (heading type instructions)
   "Convert the drill-table tree at point to a list of OrgDrillCards. "
-  (--map (OrgDrillCard heading type instructions it)
+  (--map (OrgDrillCard
+           (if (string= "" heading)
+             (cdr (car it)) heading)
+           type instructions it)
          (org-drill-table--drill-table-rows)))
 
 (defun org-drill-table--get-or-read-prop (name read-fn)
@@ -310,6 +322,7 @@ INSTRUCTIONS is a string describing how to use the card."
 
       (if (zerop len)
           (message "No new cards to insert")
+        (org-align-all-tags)
         (message "Inserted %s new card%s"
                  len
                  (if (= 1 len) "" "s"))))))
