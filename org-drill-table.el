@@ -36,11 +36,13 @@
 ;; For example, given the following org headline,
 
 ;;    * Vocab
+;;    |-----------+---------|
 ;;    | English   | Spanish |
 ;;    |-----------+---------|
 ;;    | Today     | Hoy     |
 ;;    | Yesterday | Ayer    |
 ;;    | Tomorrow  | Mañana  |
+;;    |-----------+---------|
 
 ;; invoking `org-drill-table-generate' will generate cards for each table row:
 
@@ -50,11 +52,13 @@
 ;;    :DRILL_CARD_TYPE: twosided
 ;;    :DRILL_INSTRUCTIONS: Translate the following word.
 ;;    :END:
+;;    |-----------+---------|
 ;;    | English   | Spanish |
 ;;    |-----------+---------|
 ;;    | Today     | Hoy     |
 ;;    | Yesterday | Ayer    |
 ;;    | Tomorrow  | Mañana  |
+;;    |-----------+---------|
 ;;    ** Cards
 ;;    *** Noun                                                            :drill:
 ;;    :PROPERTIES:
@@ -129,10 +133,9 @@
   "Extract the rows from the table at point.
 Return a list of rows, where each row a cons of the column name
 and the row value."
-  (cl-destructuring-bind (header &rest body) (org-table-to-lisp)
-    (->> body
-      (--remove (equal 'hline it))
-      (--map (-zip-with 'cons header it)))))
+  (cl-destructuring-bind
+      (header &rest body) (--remove (equal 'hline it) (org-table-to-lisp))
+    (--map (-zip-with 'cons header it) body)))
 
 (defun org-drill-table--goto-table-in-subtree ()
   "Move to the first table in the current subtree."
