@@ -178,11 +178,12 @@ and the row value."
 
         ;; Instructions are the rest of the text up to the first child.
         (let ((instructions
-               (buffer-substring-no-properties
-                (point)
-                (save-excursion
-                  (outline-next-heading)
-                  (1- (point))))))
+               (s-trim
+                (buffer-substring-no-properties
+                 (point)
+                 (save-excursion
+                   (outline-next-heading)
+                   (1- (point)))))))
 
           ;; Get an alist of headings to content.
           (let (acc)
@@ -191,11 +192,11 @@ and the row value."
                     (content (save-restriction
                                (org-narrow-to-subtree)
                                (org-drill-table--skip-props-and-schedule)
-                               (->> (buffer-substring (point) (point-max))
-                                 (s-split "\n")
-                                 (-drop 1)
-                                 (s-join "\n")
-                                 s-trim))))
+                               (->> (buffer-substring-no-properties (point) (point-max))
+                                    (s-split "\n")
+                                    (-drop 1)
+                                    (s-join "\n")
+                                    s-trim))))
                 (setq acc (cons (cons hd content) acc))))
 
             (OrgDrillCard heading type instructions (nreverse acc))))))))
