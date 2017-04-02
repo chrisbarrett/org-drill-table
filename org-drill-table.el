@@ -146,6 +146,7 @@ and the row value."
   (goto-char (line-end-position))
   (newline)
   (org-set-property "DRILL_CARD_TYPE" (OrgDrillCard-type card))
+  (org-indent-line)
   (insert (OrgDrillCard-instructions card))
   ;; Insert subheadings. Create a subheading for the first and use the same
   ;; heading level for the rest.
@@ -154,7 +155,11 @@ and the row value."
       (if (zerop idx) (org-insert-subheading nil) (org-insert-heading))
       (insert header)
       (newline)
-      (insert value))))
+      (org-indent-line)
+      (insert value)
+      (org-indent-line)
+      ))
+  )
 
 (defun org-drill-table--skip-props-and-schedule ()
   "Move past the properties and schedule of the current subtree."
@@ -195,8 +200,10 @@ and the row value."
                                (->> (buffer-substring-no-properties (point) (point-max))
                                     (s-split "\n")
                                     (-drop 1)
+                                    (mapcar 's-trim)
                                     (s-join "\n")
-                                    s-trim))))
+                                    s-trim
+                                    message))))
                 (setq acc (cons (cons hd content) acc))))
 
             (OrgDrillCard heading type instructions (nreverse acc))))))))
