@@ -145,7 +145,9 @@ Return a list of rows, where each row a cons of the column name
 and the row value."
   (cl-destructuring-bind
       (header &rest body) (--remove (equal 'hline it) (org-table-to-lisp))
-    (--map (-zip-with 'cons header it) body)))
+    (->> body
+         (--map (-zip-with 'cons header it))
+         (--map (-remove (lambda (x) (string= "" (cdr x))) it)))))
 
 (defun org-drill-table--goto-table-in-subtree ()
   "Move to the first table in the current subtree."
@@ -162,7 +164,7 @@ and the row value."
   (insert (OrgDrillCard-instructions card))
   ;; Insert subheadings. Create a subheading for the first and use the same
   ;; heading level for the rest.
-  (--each (-map-indexed 'cons (--remove (string= "" (cdr it)) (OrgDrillCard-subheadings card)))
+  (--each (-map-indexed 'cons (OrgDrillCard-subheadings card))
     (cl-destructuring-bind (idx header . value) it
       (if (zerop idx) (org-insert-subheading nil) (org-insert-heading))
       (insert header)
