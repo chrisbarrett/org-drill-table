@@ -110,7 +110,7 @@
 (require 's)
 (require 'cl-lib)
 (require 'org)
-(require 'org-drill)
+(require 'org-drill nil t)
 
 (defgroup org-drill-table nil
   "Generate drill cards from org tables."
@@ -123,6 +123,10 @@
   :type 'boolean)
 
 ;; -----------------------------------------------------------------------------
+
+;; Silence byte-compiler warning.
+(defvar org-drill-card-type-alist nil)
+
 
 (cl-defstruct (OrgDrillCard
                (:constructor OrgDrillCard (heading type instructions subheadings)))
@@ -264,9 +268,9 @@ Return a list of OrgDrillCard."
 (defun org-drill-table--table->cards (heading type instructions)
   "Convert the drill-table tree at point to a list of OrgDrillCards. "
   (--map (OrgDrillCard
-           (if (string= "" heading)
-             (cdr (car it)) heading)
-           type instructions it)
+          (if (string= "" heading)
+              (cdr (car it)) heading)
+          type instructions it)
          (org-drill-table--drill-table-rows)))
 
 (defun org-drill-table--get-or-read-prop (name read-fn)
@@ -293,11 +297,11 @@ INSTRUCTIONS is a string describing how to use the card."
     (org-drill-table--get-or-read-prop
      "DRILL_CARD_TYPE"
      (lambda ()
-       (ido-completing-read "Type: "
-                            (-keep 'car org-drill-card-type-alist)
-                            nil
-                            t
-                            "twosided")))
+       (completing-read "Type: "
+                        (-keep 'car org-drill-card-type-alist)
+                        nil
+                        t
+                        "twosided")))
     (org-drill-table--get-or-read-prop
      "DRILL_INSTRUCTIONS" (lambda () (read-string "Card instructions: ")))))
 
@@ -323,11 +327,13 @@ INSTRUCTIONS is a string describing how to use the card."
     (let ((len (length new-cards)))
 
       (if (zerop len)
-          (message "No new cards to insert")
+          (when (called-interactively-p nil)
+            (message "No new cards to insert"))
         (org-align-all-tags)
-        (message "Inserted %s new card%s"
-                 len
-                 (if (= 1 len) "" "s"))))))
+        (when (called-interactively-p nil)
+          (message "Inserted %s new card%s"
+                   len
+                   (if (= 1 len) "" "s")))))))
 
 ;;;###autoload
 (defun org-drill-table-update ()

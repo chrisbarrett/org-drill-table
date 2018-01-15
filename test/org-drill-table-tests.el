@@ -26,10 +26,19 @@
 ;;; Code:
 
 (require 'ert)
-(require 'f)
-(defvar test--input
+(require 'org-drill-table)
 
-  "* Test Heading
+(defun org-drill-table--setup-buffer (str)
+  (org-mode)
+  (goto-char (point-min))
+  (save-excursion
+    (insert str)))
+
+(ert-deftest org-drill-table--creates-cards-heading ()
+  (with-temp-buffer
+    (org-drill-table--setup-buffer "
+
+* Test Heading
 | X  | Y  |
 |----+----|
 | X1 | Y1 |
@@ -37,20 +46,89 @@
 | X3 | Y3 |
 
 ")
+    (search-forward "Test Heading")
+    (org-drill-table-generate "_" "_" "_")
+    (should (s-match (rx (+ "*") (+ space) "Cards")
+                     (buffer-string)))))
 
-(defmacro test--with-temp-test-buffer (&rest body)
-  (declare (indent 0))
-  `(with-temp-buffer
-     (org-mode)
-     (insert test--input)
-     (goto-char (point-min))
-     ,@body))
+(ert-deftest org-drill-table--error-if-no-table-at-pt ()
+  (with-temp-buffer
+    (org-drill-table--setup-buffer "")
+    (should-error (org-drill-table-generate "_" "_" "_"))))
 
-(ert-deftest creates-cards-heading ()
-  (should (s-match (rx (+ "*") (+ space) "Cards")
-                   (test--with-temp-test-buffer
-                    (org-drill-table-generate "_" "_" "_")
-                    (buffer-string)))))
+(ert-deftest org-drill-table--tracks-different-subheading-separately ()
+  (with-temp-buffer
+    (org-drill-table--setup-buffer "
+
+* L1
+** L2a
+| X  | Y  |
+|----+----|
+| X1 | Y1 |
+** L2b
+| X  | Y  |
+|----+----|
+| X2 | Y2 |
+** L2c
+| X  | Y  |
+|----+----|
+| X3 | Y3 |
+
+")
+    (dolist (heading '("L2a" "L2b" "L2c"))
+      (search-forward heading)
+      (org-drill-table-generate heading "ty" "_"))
+
+    (should (equal (buffer-string) "
+
+* L1
+** L2a
+| X  | Y  |
+|----+----|
+| X1 | Y1 |
+*** Cards                                                          :noexport:
+**** L2a                                                              :drill:
+     :PROPERTIES:
+     :DRILL_CARD_TYPE: ty
+     :END:
+_
+***** X
+X1
+***** Y
+Y1
+** L2b
+| X  | Y  |
+|----+----|
+| X2 | Y2 |
+*** Cards                                                          :noexport:
+**** L2b                                                              :drill:
+     :PROPERTIES:
+     :DRILL_CARD_TYPE: ty
+     :END:
+_
+***** X
+X2
+***** Y
+Y2
+** L2c
+| X  | Y  |
+|----+----|
+| X3 | Y3 |
+
+*** Cards                                                          :noexport:
+
+**** L2c                                                              :drill:
+     :PROPERTIES:
+     :DRILL_CARD_TYPE: ty
+     :END:
+_
+
+***** X
+X3
+
+***** Y
+Y3
+"))))
 
 (provide 'org-drill-table-tests)
 
