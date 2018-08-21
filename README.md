@@ -1,5 +1,11 @@
 # org-drill-table
 
+*DEPRECATION NOTICE*: I've found Anki to be significantly more practical than org-drill
+for language learning, so this package isn't getting a ton of love. 😅 I'm keeping 
+this up in cos people might find it useful, but it's not actively updated.
+
+---
+
 Easily generate org-drill cards using org-mode tables.
 
 ## Summary
